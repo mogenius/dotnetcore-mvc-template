@@ -1,13 +1,16 @@
-FROM mcr.microsoft.com/dotnet/aspnetcore-build:6.0 AS build
-WORKDIR /app
-COPY *.csproj ./
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+WORKDIR /source
+
+# copy csproj and restore as distinct layers
+COPY *.csproj .
 RUN dotnet restore
 
-COPY . ./
+# copy and publish app and libraries
+COPY . .
+RUN dotnet publish -c release -o /app --no-restore
 
-RUN dotnet publish -c Release -o out
-
-FROM mcr.microsoft.com/dotnet/aspnet:6.0
+# final stage/image
+FROM mcr.microsoft.com/dotnet/runtime:6.0
 WORKDIR /app
-COPY --from=build /app/out .
-ENTRYPOINT ["dotnet", "NetCoreProject.dll"]
+COPY --from=build /app .
+ENTRYPOINT ["dotnet", "dotnetapp.dll"]
